@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Header from "@/components/common/Header";
 
 type PortfolioItem = {
@@ -24,12 +24,6 @@ type HallGroup = {
 };
 
 const filters = ["전체", "웨딩홀", "호텔", "야외"];
-
-function sortByCreatedAtDesc(a: PortfolioItem, b: PortfolioItem) {
-  const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-  const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-  return bTime - aTime;
-}
 
 function sortByPublicIdAsc(a: PortfolioItem, b: PortfolioItem) {
   return (a.publicId || "").localeCompare(b.publicId || "", undefined, {
@@ -64,7 +58,6 @@ function groupByHall(items: PortfolioItem[]): HallGroup[] {
       : 0;
     const incomingTime = item.createdAt ? new Date(item.createdAt).getTime() : 0;
 
-    // 카드 순서를 위한 최신 업로드 시간만 갱신
     if (incomingTime > currentLatest) {
       group.latestCreatedAt = item.createdAt || "";
     }
@@ -77,14 +70,11 @@ function groupByHall(items: PortfolioItem[]): HallGroup[] {
     return {
       ...group,
       items: sortedItems,
-      // 대표이미지는 항상 폴더 안 1번 이미지
       coverImage: firstItem?.image || group.coverImage,
-      // 카테고리도 1번 이미지 기준으로 맞춤
       category: firstItem?.category || group.category,
     };
   });
 
-  // 카드 순서는 최신 업로드된 폴더가 맨 앞으로
   return groups.sort((a, b) => {
     const aTime = a.latestCreatedAt ? new Date(a.latestCreatedAt).getTime() : 0;
     const bTime = b.latestCreatedAt ? new Date(b.latestCreatedAt).getTime() : 0;
@@ -100,6 +90,11 @@ export default function PortfolioPage() {
 
   const [selectedHall, setSelectedHall] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchDeltaX = useRef(0);
+  const touchDeltaY = useRef(0);
 
   useEffect(() => {
     async function fetchPortfolio() {
@@ -163,6 +158,45 @@ export default function PortfolioPage() {
   function goNext() {
     if (!currentHallItems.length || selectedIndex === null) return;
     setSelectedIndex((selectedIndex + 1) % currentHallItems.length);
+  }
+
+  function handleTouchStart(event: React.TouchEvent<HTMLDivElement>) {
+    const touch = event.touches[0];
+    touchStartX.current = touch.clientX;
+    touchStartY.current = touch.clientY;
+    touchDeltaX.current = 0;
+    touchDeltaY.current = 0;
+  }
+
+  function handleTouchMove(event: React.TouchEvent<HTMLDivElement>) {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+
+    const touch = event.touches[0];
+    touchDeltaX.current = touch.clientX - touchStartX.current;
+    touchDeltaY.current = touch.clientY - touchStartY.current;
+  }
+
+  function handleTouchEnd() {
+    const deltaX = touchDeltaX.current;
+    const deltaY = touchDeltaY.current;
+
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+
+    const isHorizontalSwipe = absX > 50 && absX > absY * 1.2;
+
+    if (isHorizontalSwipe) {
+      if (deltaX < 0) {
+        goNext();
+      } else {
+        goPrev();
+      }
+    }
+
+    touchStartX.current = null;
+    touchStartY.current = null;
+    touchDeltaX.current = 0;
+    touchDeltaY.current = 0;
   }
 
   useEffect(() => {
@@ -381,17 +415,17 @@ export default function PortfolioPage() {
 
       {currentItem && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4 py-8 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70 px-0 py-0 backdrop-blur-sm sm:px-4 sm:py-8 lg:items-center"
           onClick={closeModal}
         >
           <div
-            className="relative max-h-[92vh] w-full max-w-6xl overflow-hidden rounded-[1.8rem] bg-white shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
+            className="relative flex h-[100dvh] w-full flex-col overflow-hidden rounded-none bg-white shadow-[0_30px_80px_rgba(0,0,0,0.35)] sm:h-auto sm:max-h-[92vh] sm:max-w-6xl sm:rounded-[1.8rem]"
             onClick={(event) => event.stopPropagation()}
           >
             <button
               type="button"
               onClick={closeModal}
-              className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-xl text-white transition hover:bg-black/70"
+              className="absolute right-4 top-4 z-30 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-xl text-white transition hover:bg-black/70"
               aria-label="닫기"
             >
               ✕
@@ -400,7 +434,7 @@ export default function PortfolioPage() {
             <button
               type="button"
               onClick={goPrev}
-              className="absolute left-4 top-1/2 z-20 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-2xl text-white transition hover:bg-black/70"
+              className="absolute left-3 top-[32vh] z-30 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-2xl text-white transition hover:bg-black/70 sm:left-4 sm:top-1/2 sm:h-12 sm:w-12"
               aria-label="이전 이미지"
             >
               ‹
@@ -409,47 +443,59 @@ export default function PortfolioPage() {
             <button
               type="button"
               onClick={goNext}
-              className="absolute right-4 top-1/2 z-20 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-2xl text-white transition hover:bg-black/70"
+              className="absolute right-3 top-[32vh] z-30 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-2xl text-white transition hover:bg-black/70 sm:right-4 sm:top-1/2 sm:h-12 sm:w-12"
               aria-label="다음 이미지"
             >
               ›
             </button>
 
-            <div className="grid max-h-[92vh] overflow-y-auto lg:grid-cols-[1.1fr_0.9fr]">
-              <div className="bg-[#f6f2ec]">
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:grid lg:max-h-[92vh] lg:grid-cols-[1.1fr_0.9fr]">
+              <div
+                className="relative flex min-h-[46vh] items-center justify-center bg-[#111] sm:min-h-[52vh] lg:min-h-0 lg:bg-[#f6f2ec]"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
                 <img
                   src={currentItem.image}
                   alt={currentItem.title || currentItem.hall}
-                  className="h-full w-full object-cover"
+                  className="h-full max-h-[62vh] w-full select-none object-contain lg:max-h-none lg:h-full lg:object-cover"
+                  draggable={false}
                 />
+
+                <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/35 px-3 py-1 text-[11px] text-white sm:hidden">
+                  좌우로 밀어서 넘기기
+                </div>
               </div>
 
-              <div className="flex flex-col justify-center p-8 sm:p-10">
-                <p className="text-xs uppercase tracking-[0.24em] text-[#9b846d]">
-                  Wedding Hall
-                </p>
-
-                <h3 className="mt-4 text-3xl font-semibold leading-tight text-[#211c18]">
-                  {currentItem.hall}
-                </h3>
-
-                {currentItem.description && (
-                  <p className="mt-6 text-base leading-8 text-[#5f554d]">
-                    {currentItem.description}
+              <div className="flex flex-col bg-white px-5 pb-6 pt-5 sm:px-8 sm:pb-8 sm:pt-6 lg:justify-center lg:p-10">
+                <div className="shrink-0">
+                  <p className="text-xs uppercase tracking-[0.24em] text-[#9b846d]">
+                    Wedding Hall
                   </p>
-                )}
 
-                <p className="mt-6 text-sm text-[#8c7a6b]">
-                  {selectedIndex !== null ? selectedIndex + 1 : 1} /{" "}
-                  {currentHallItems.length}
-                </p>
+                  <h3 className="mt-3 text-2xl font-semibold leading-tight text-[#211c18] sm:text-3xl">
+                    {currentItem.hall}
+                  </h3>
 
-                <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+                  <p className="mt-4 text-sm text-[#8c7a6b] sm:text-base">
+                    {selectedIndex !== null ? selectedIndex + 1 : 1} /{" "}
+                    {currentHallItems.length}
+                  </p>
+
+                  {currentItem.description && (
+                    <p className="mt-5 text-sm leading-7 text-[#5f554d] sm:text-base sm:leading-8">
+                      {currentItem.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:mt-10">
                   <a
                     href="https://pf.kakao.com/"
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center justify-center rounded-full bg-[#1d1815] px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5"
+                    className="inline-flex items-center justify-center rounded-full bg-[#1d1815] px-6 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5"
                   >
                     이 분위기로 문의하기
                   </a>
@@ -457,7 +503,7 @@ export default function PortfolioPage() {
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="inline-flex items-center justify-center rounded-full border border-[#d8ccc0] px-6 py-3 text-sm font-semibold text-[#5f554d] transition hover:bg-[#f5eee6]"
+                    className="inline-flex items-center justify-center rounded-full border border-[#d8ccc0] px-6 py-3.5 text-sm font-semibold text-[#5f554d] transition hover:bg-[#f5eee6]"
                   >
                     닫기
                   </button>
