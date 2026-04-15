@@ -492,7 +492,7 @@ export default function PortfolioPage() {
 
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:mt-10">
                   <a
-                    href="https://pf.kakao.com/"
+                    href="https://open.kakao.com/o/s2cR31ph"
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center justify-center rounded-full bg-[#1d1815] px-6 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5"

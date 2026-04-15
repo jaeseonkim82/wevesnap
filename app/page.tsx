@@ -195,7 +195,7 @@ export default function HomePage() {
 
                 <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:justify-start">
                   <a
-                    href="https://open.kakao.com/"
+                    href="https://open.kakao.com/o/s2cR31ph"
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex w-full max-w-[280px] items-center justify-center rounded-full bg-white px-7 py-4 text-sm font-semibold text-[#1d1815] transition duration-300 hover:-translate-y-0.5 hover:bg-[#f3ede4] sm:w-auto sm:max-w-none"
