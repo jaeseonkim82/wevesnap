@@ -126,7 +126,7 @@ export default function Header() {
               ))}
 
               <Link
-                href="/blog"
+                href="https://blog.naver.com/weve_snap"
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2 text-lg"
               >
