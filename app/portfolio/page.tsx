@@ -10,6 +10,8 @@ type PortfolioItem = {
   image: string;
   title: string;
   description: string;
+  publicId?: string;
+  createdAt?: string;
 };
 
 type HallGroup = {
@@ -18,9 +20,23 @@ type HallGroup = {
   coverImage: string;
   count: number;
   items: PortfolioItem[];
+  latestCreatedAt?: string;
 };
 
 const filters = ["전체", "웨딩홀", "호텔", "야외"];
+
+function sortByCreatedAtDesc(a: PortfolioItem, b: PortfolioItem) {
+  const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+  const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+  return bTime - aTime;
+}
+
+function sortByPublicIdAsc(a: PortfolioItem, b: PortfolioItem) {
+  return (a.publicId || "").localeCompare(b.publicId || "", undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+}
 
 function groupByHall(items: PortfolioItem[]): HallGroup[] {
   const map = new Map<string, HallGroup>();
@@ -35,15 +51,45 @@ function groupByHall(items: PortfolioItem[]): HallGroup[] {
         coverImage: item.image,
         count: 0,
         items: [],
+        latestCreatedAt: item.createdAt || "",
       });
     }
 
     const group = map.get(key)!;
     group.items.push(item);
     group.count += 1;
+
+    const currentLatest = group.latestCreatedAt
+      ? new Date(group.latestCreatedAt).getTime()
+      : 0;
+    const incomingTime = item.createdAt ? new Date(item.createdAt).getTime() : 0;
+
+    // 카드 순서를 위한 최신 업로드 시간만 갱신
+    if (incomingTime > currentLatest) {
+      group.latestCreatedAt = item.createdAt || "";
+    }
   }
 
-  return Array.from(map.values());
+  const groups = Array.from(map.values()).map((group) => {
+    const sortedItems = [...group.items].sort(sortByPublicIdAsc);
+    const firstItem = sortedItems[0];
+
+    return {
+      ...group,
+      items: sortedItems,
+      // 대표이미지는 항상 폴더 안 1번 이미지
+      coverImage: firstItem?.image || group.coverImage,
+      // 카테고리도 1번 이미지 기준으로 맞춤
+      category: firstItem?.category || group.category,
+    };
+  });
+
+  // 카드 순서는 최신 업로드된 폴더가 맨 앞으로
+  return groups.sort((a, b) => {
+    const aTime = a.latestCreatedAt ? new Date(a.latestCreatedAt).getTime() : 0;
+    const bTime = b.latestCreatedAt ? new Date(b.latestCreatedAt).getTime() : 0;
+    return bTime - aTime;
+  });
 }
 
 export default function PortfolioPage() {
@@ -66,14 +112,14 @@ export default function PortfolioPage() {
         });
 
         if (!response.ok) {
-          throw new Error("포트폴리오 데이터를 불러오지 못했어.");
+          throw new Error("포트폴리오 데이터를 불러오지 못했습니다.");
         }
 
         const data = await response.json();
         setItems(data.items || []);
       } catch (err) {
         console.error(err);
-        setError("포트폴리오를 불러오지 못했어.");
+        setError("포트폴리오를 불러오지 못했습니다.");
       } finally {
         setLoading(false);
       }
@@ -93,7 +139,9 @@ export default function PortfolioPage() {
 
   const currentHallItems = useMemo(() => {
     if (!selectedHall) return [];
-    return filteredItems.filter((item) => item.hall === selectedHall);
+    return filteredItems
+      .filter((item) => item.hall === selectedHall)
+      .sort(sortByPublicIdAsc);
   }, [filteredItems, selectedHall]);
 
   const currentItem =
@@ -163,7 +211,8 @@ export default function PortfolioPage() {
           </h1>
           <p className="mt-6 max-w-2xl text-base leading-8 text-white/72">
             웨딩홀과 공간의 분위기, 그리고 그 안에서 자연스럽게 남는 감정의
-            순간들을 모아두었습니다. 원하는 장소의 분위기를 먼저 확인해봐.
+            순간들을 모아두었습니다. 원하시는 장소의 분위기를 먼저 편하게
+            확인해보세요.
           </p>
         </div>
       </section>
@@ -197,7 +246,7 @@ export default function PortfolioPage() {
               </p>
               <h2 className="mt-2 text-3xl font-semibold">{selectedHall}</h2>
               <p className="mt-2 text-sm leading-7 text-[#6b625b]">
-                해당 웨딩홀에서 촬영한 전체 사진을 확인할 수 있어.
+                해당 웨딩홀에서 촬영한 전체 사진을 확인하실 수 있습니다.
               </p>
             </div>
 
@@ -216,7 +265,7 @@ export default function PortfolioPage() {
 
         {loading && (
           <div className="py-20 text-center text-[#6b625b]">
-            포트폴리오를 불러오는 중이야...
+            포트폴리오를 불러오는 중입니다...
           </div>
         )}
 
@@ -226,7 +275,7 @@ export default function PortfolioPage() {
 
         {!loading && !error && filteredItems.length === 0 && (
           <div className="py-20 text-center text-[#6b625b]">
-            아직 등록된 포트폴리오가 없어.
+            아직 등록된 포트폴리오가 없습니다.
           </div>
         )}
 
@@ -275,22 +324,22 @@ export default function PortfolioPage() {
                 <div className="overflow-hidden">
                   <img
                     src={item.image}
-                    alt={item.title}
+                    alt={item.title || item.hall}
                     className="h-[420px] w-full object-cover transition duration-700 group-hover:scale-105"
                   />
                 </div>
 
                 <div className="p-6">
-  <p className="text-xs uppercase tracking-[0.24em] text-[#9b846d]">
-    {item.hall}
-  </p>
+                  <p className="text-xs uppercase tracking-[0.24em] text-[#9b846d]">
+                    {item.hall}
+                  </p>
 
-  {item.description && (
-    <p className="mt-3 text-sm leading-7 text-[#6b625b]">
-      {item.description}
-    </p>
-  )}
-</div>
+                  {item.description && (
+                    <p className="mt-3 text-sm leading-7 text-[#6b625b]">
+                      {item.description}
+                    </p>
+                  )}
+                </div>
               </button>
             ))}
           </div>
@@ -302,12 +351,12 @@ export default function PortfolioPage() {
           <h2 className="text-3xl font-semibold leading-tight sm:text-5xl">
             소중한 하루를
             <br />
-            믿고 맡길 수 있는 촬영을 찾고 있다면
+            믿고 맡길 수 있는 촬영을 찾고 계시다면
           </h2>
 
           <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-white/75">
-            예식 일정과 원하는 분위기를 남겨주면, 위브스냅이 가장 자연스럽고
-            안정적인 방향으로 상담을 도와줄게.
+            예식 일정과 원하시는 분위기를 남겨주시면, 위브스냅이 가장
+            자연스럽고 안정적인 방향으로 상담을 도와드리겠습니다.
           </p>
 
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
@@ -370,25 +419,25 @@ export default function PortfolioPage() {
               <div className="bg-[#f6f2ec]">
                 <img
                   src={currentItem.image}
-                  alt={currentItem.title}
+                  alt={currentItem.title || currentItem.hall}
                   className="h-full w-full object-cover"
                 />
               </div>
 
               <div className="flex flex-col justify-center p-8 sm:p-10">
                 <p className="text-xs uppercase tracking-[0.24em] text-[#9b846d]">
-  Wedding Hall
-</p>
+                  Wedding Hall
+                </p>
 
-<h3 className="mt-4 text-3xl font-semibold leading-tight text-[#211c18]">
-  {currentItem.hall}
-</h3>
+                <h3 className="mt-4 text-3xl font-semibold leading-tight text-[#211c18]">
+                  {currentItem.hall}
+                </h3>
 
-{currentItem.description && (
-  <p className="mt-6 text-base leading-8 text-[#5f554d]">
-    {currentItem.description}
-  </p>
-)}
+                {currentItem.description && (
+                  <p className="mt-6 text-base leading-8 text-[#5f554d]">
+                    {currentItem.description}
+                  </p>
+                )}
 
                 <p className="mt-6 text-sm text-[#8c7a6b]">
                   {selectedIndex !== null ? selectedIndex + 1 : 1} /{" "}
