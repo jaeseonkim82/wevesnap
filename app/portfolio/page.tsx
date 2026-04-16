@@ -160,6 +160,16 @@ export default function PortfolioPage() {
     setSelectedIndex((selectedIndex + 1) % currentHallItems.length);
   }
 
+  function goToHallList() {
+    setSelectedHall(null);
+    setSelectedIndex(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   function handleTouchStart(event: React.TouchEvent<HTMLDivElement>) {
     const touch = event.touches[0];
     touchStartX.current = touch.clientX;
@@ -206,15 +216,9 @@ export default function PortfolioPage() {
     document.body.style.overflow = "hidden";
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        closeModal();
-      }
-      if (event.key === "ArrowLeft") {
-        goPrev();
-      }
-      if (event.key === "ArrowRight") {
-        goNext();
-      }
+      if (event.key === "Escape") closeModal();
+      if (event.key === "ArrowLeft") goPrev();
+      if (event.key === "ArrowRight") goNext();
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -251,7 +255,11 @@ export default function PortfolioPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-12 sm:px-10 lg:px-16">
+      <section
+        className={`mx-auto max-w-7xl px-6 py-12 sm:px-10 lg:px-16 ${
+          selectedHall ? "pb-36 sm:pb-12" : ""
+        }`}
+      >
         <div className="flex flex-wrap gap-3">
           {filters.map((filter) => (
             <button
@@ -273,7 +281,7 @@ export default function PortfolioPage() {
         </div>
 
         {selectedHall && (
-          <div className="mt-8 flex items-center justify-between gap-4">
+          <div className="mt-8 flex items-start justify-between gap-4">
             <div>
               <p className="text-sm uppercase tracking-[0.24em] text-[#9b846d]">
                 Hall
@@ -286,13 +294,10 @@ export default function PortfolioPage() {
 
             <button
               type="button"
-              onClick={() => {
-                setSelectedHall(null);
-                setSelectedIndex(null);
-              }}
-              className="inline-flex items-center justify-center rounded-full border border-[#d8ccc0] bg-white px-5 py-3 text-sm font-medium text-[#5f554d] transition hover:-translate-y-0.5 hover:bg-[#f5eee6]"
+              onClick={goToHallList}
+              className="hidden sm:inline-flex items-center justify-center rounded-full border border-[#d8ccc0] bg-white px-5 py-3 text-sm font-medium text-[#5f554d] transition hover:-translate-y-0.5 hover:bg-[#f5eee6]"
             >
-              ← 웨딩홀 목록 보기
+              웨딩홀 목록 보기
             </button>
           </div>
         )}
@@ -395,7 +400,7 @@ export default function PortfolioPage() {
 
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <a
-              href="https://pf.kakao.com/"
+              href="https://open.kakao.com/o/s2cR31ph"
               target="_blank"
               rel="noreferrer"
               className="inline-flex w-full max-w-[280px] items-center justify-center rounded-full bg-white px-7 py-4 text-sm font-semibold text-[#1d1815] transition duration-300 hover:-translate-y-0.5 hover:bg-[#f3ede4] sm:w-auto sm:max-w-none"
@@ -412,6 +417,42 @@ export default function PortfolioPage() {
           </div>
         </div>
       </section>
+
+      {selectedHall && !currentItem && (
+  <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+14px)] z-[70] px-4 sm:hidden">
+    <div className="mx-auto flex max-w-md items-center gap-2 rounded-full border border-white/20 bg-[#1d1815]/85 p-2 shadow-[0_20px_50px_rgba(0,0,0,0.25)] backdrop-blur-lg">
+
+      {/* 뒤로가기 역할 */}
+      <button
+        type="button"
+        onClick={goToHallList}
+        className="flex-1 rounded-full bg-white px-4 py-3 text-sm font-semibold text-[#1d1815] transition hover:bg-[#f3ede4]"
+      >
+        목록으로 돌아가기
+      </button>
+
+      {/* 문의 */}
+      <a
+        href="https://open.kakao.com/o/s2cR31ph"
+        target="_blank"
+        rel="noreferrer"
+        className="flex-1 rounded-full px-4 py-3 text-center text-sm font-semibold text-white transition hover:opacity-90"
+      >
+        상담 문의
+      </a>
+
+      {/* TOP */}
+      <button
+        type="button"
+        onClick={scrollToTop}
+        className="rounded-full px-3 py-3 text-xs font-medium text-white/70 transition hover:text-white"
+      >
+        TOP
+      </button>
+
+    </div>
+  </div>
+)}
 
       {currentItem && (
         <div
