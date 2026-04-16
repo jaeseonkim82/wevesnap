@@ -31,7 +31,7 @@ function sortByPublicIdAsc(
 export async function GET() {
   try {
     const result = await cloudinary.api.resources_by_tag("wevesnap-portfolio", {
-      max_results: 100,
+      max_results: 300,
       context: true,
       tags: true,
       resource_type: "image",
