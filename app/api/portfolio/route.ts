@@ -14,43 +14,50 @@ type CloudinaryResource = {
 
 function getTagValue(tags: string[] | undefined, prefix: string): string {
   if (!tags) return "";
+
   const tag = tags.find((item) => item.startsWith(prefix));
   return tag ? tag.replace(prefix, "") : "";
 }
 
-function sortByPublicIdAsc(
-  a: CloudinaryResource,
-  b: CloudinaryResource
-): number {
-  return a.public_id.localeCompare(b.public_id, undefined, {
-    numeric: true,
-    sensitivity: "base",
-  });
+function normalizeLimit(value: string | null) {
+  const parsed = Number(value || 20);
+
+  if (Number.isNaN(parsed)) return 20;
+  if (parsed < 1) return 20;
+  if (parsed > 50) return 50;
+
+  return parsed;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const result = await cloudinary.api.resources_by_tag("wevesnap-portfolio", {
-      max_results: 300,
-      context: true,
-      tags: true,
-      resource_type: "image",
-    });
+    const { searchParams } = new URL(request.url);
 
-    const rawResources = Array.isArray(result.resources)
-      ? result.resources
-      : [];
+    const limit = normalizeLimit(searchParams.get("limit"));
+    const cursor = searchParams.get("cursor");
+    const hallParam = searchParams.get("hall");
 
-    const resources: CloudinaryResource[] = rawResources
-      .map((item: any) => ({
-        asset_id: item.asset_id ?? "",
-        public_id: item.public_id ?? "",
-        secure_url: item.secure_url ?? "",
-        created_at: item.created_at ?? "",
-        tags: Array.isArray(item.tags) ? item.tags : [],
-        context: item.context,
-      }))
-      .sort(sortByPublicIdAsc);
+    let expression = "resource_type:image AND tags=wevesnap-portfolio";
+
+    if (hallParam) {
+      const hall = decodeURIComponent(hallParam).trim();
+      expression += ` AND tags=hall_${hall}`;
+    }
+
+    let query = cloudinary.search
+      .expression(expression)
+      .sort_by("created_at", "desc")
+      .max_results(limit)
+      .with_field("context")
+      .with_field("tags");
+
+    if (cursor) {
+      query = query.next_cursor(cursor);
+    }
+
+    const result = await query.execute();
+
+    const resources = (result.resources || []) as CloudinaryResource[];
 
     const items = resources.map((item) => {
       const hall = getTagValue(item.tags, "hall_");
@@ -68,7 +75,10 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({ items });
+    return NextResponse.json({
+      items,
+      nextCursor: result.next_cursor || null,
+    });
   } catch (error) {
     console.error("Cloudinary portfolio fetch error:", error);
 

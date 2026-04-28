@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Header from "@/components/common/Header";
+
 const reviewItems = [
   {
     id: 1,
@@ -36,21 +37,13 @@ const reviewItems = [
     image: "/images/reviews/review-04.jpg",
   },
 ];
-type PortfolioItem = {
-  id: string;
-  hall: string;
-  category: string;
-  image: string;
-  title: string;
-  description: string;
-};
 
-type HallCard = {
+type HallItem = {
   hall: string;
   category: string;
   coverImage: string;
   count: number;
-  description: string;
+  latestCreatedAt?: string;
 };
 
 const faqItems = [
@@ -59,14 +52,13 @@ const faqItems = [
     answer:
       "A. 위브스냅은 배경보다 인물의 표정과 감정에 집중하고 있습니다. 웨딩홀 환경이나 조명에 영향을 최대한 적게 받는 촬영방식을 고수하고 있습니다. 어떠한 장소에서도 안정적인 결과로 보답합니다.",
   },
-
   {
     question: "Q. 웨딩홀마다 결과 차이가 많이 나지 않나요?",
     answer:
-      "A. 맞습니다. 실제로 조명, 층고, 동선에 따라 결과 차이가 크게 발생합니다. 위브스냅은 다양한 웨딩홀 경험을 기반으로 각 공간에 맞는 촬영 방식으로 대응하고 있습니다..",
+      "A. 맞습니다. 실제로 조명, 층고, 동선에 따라 결과 차이가 크게 발생합니다. 위브스냅은 다양한 웨딩홀 경험을 기반으로 각 공간에 맞는 촬영 방식으로 대응하고 있습니다.",
   },
   {
-    question: "Q. 웨사진데이터는 안전하게 보관되나요?",
+    question: "Q. 사진데이터는 안전하게 보관되나요?",
     answer:
       "A. 위브스냅은 데이터 관리를 매우 중요하게 생각합니다. 촬영원본은 외장하드, NAS, 클라우드 등 여러 장치에 나누어 보관하고 있으며, 몇 년이 지나도 다시 찾을 수 있도록 관리하고 있습니다.",
   },
@@ -78,64 +70,39 @@ const faqItems = [
   {
     question: "Q. 촬영 예약은 언제쯤 하는 게 좋을까요?",
     answer:
-      "A. 있기 있는 날짜는 빠르게 마감되는 편이라 좋은날은 빠르게 예약을 진행하는게 좋습니다.",
+      "A. 인기 있는 날짜는 빠르게 마감되는 편이라 좋은 날은 빠르게 예약을 진행하는 게 좋습니다.",
   },
   {
     question: "Q. 결과물은 언제 받을 수 있나요?",
     answer:
-      "A. 사진파일은 최대 7일이내 전달드리는 것으로 안내드리지만, 실질적으로 3일 이내에 사진파일을 전달드리고 있습니다.",
+      "A. 사진파일은 최대 7일 이내 전달드리는 것으로 안내드리지만, 실질적으로 3일 이내에 사진파일을 전달드리고 있습니다.",
   },
   {
-    question: "Q. 사진은 어떤방식으로 전달 해주시나요?",
+    question: "Q. 사진은 어떤 방식으로 전달해주시나요?",
     answer:
-      "A. 사진은 구글 드라이브에 업로드 하여 링크를 공유드리고 있습니다.",
+      "A. 사진은 구글 드라이브에 업로드하여 링크를 공유드리고 있습니다.",
   },
-  
 ];
 
 function shuffleArray<T>(array: T[]) {
   return [...array].sort(() => Math.random() - 0.5);
 }
 
-function buildHallCards(items: PortfolioItem[]): HallCard[] {
-  const grouped = new Map<string, HallCard>();
-
-  for (const item of items) {
-    const hall = item.hall || "위브스냅";
-
-    if (!grouped.has(hall)) {
-      grouped.set(hall, {
-        hall,
-        category: item.category || "웨딩홀",
-        coverImage: item.image,
-        count: 0,
-        description:
-          item.description || `${hall}에서 촬영한 실제 본식 분위기를 확인해보세요.`,
-      });
-    }
-
-    const current = grouped.get(hall)!;
-    current.count += 1;
-
-    if (!current.description && item.description) {
-      current.description = item.description;
-    }
-  }
-
-  return Array.from(grouped.values());
+function encodeHall(hall: string) {
+  return encodeURIComponent(hall);
 }
 
 export default function HomePage() {
-  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
+  const [hallItems, setHallItems] = useState<HallItem[]>([]);
   const [loadingPortfolio, setLoadingPortfolio] = useState(true);
   const [activeReview, setActiveReview] = useState(reviewItems[0]);
 
   useEffect(() => {
-    async function fetchPortfolio() {
+    async function fetchHalls() {
       try {
         setLoadingPortfolio(true);
 
-        const response = await fetch("/api/portfolio", {
+        const response = await fetch("/api/halls", {
           cache: "no-store",
         });
 
@@ -144,22 +111,21 @@ export default function HomePage() {
         }
 
         const data = await response.json();
-        setPortfolioItems(data.items || []);
+        setHallItems(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error(error);
-        setPortfolioItems([]);
+        setHallItems([]);
       } finally {
         setLoadingPortfolio(false);
       }
     }
 
-    fetchPortfolio();
+    fetchHalls();
   }, []);
 
   const randomHallCards = useMemo(() => {
-    const grouped = buildHallCards(portfolioItems);
-    return shuffleArray(grouped).slice(0, 4);
-  }, [portfolioItems]);
+    return shuffleArray(hallItems).slice(0, 4);
+  }, [hallItems]);
 
   return (
     <main className="min-h-screen bg-[#f6f2ec] text-[#1d1815]">
@@ -254,23 +220,23 @@ export default function HomePage() {
 
           <div className="rounded-[2rem] border border-[#e6ddd2] bg-white p-8 shadow-[0_24px_70px_rgba(0,0,0,0.06)]">
             <div className="grid gap-10 text-center sm:grid-cols-3">
-              <div className="flex flex-col items-center justify-center max-w-[180px] mx-auto">
+              <div className="mx-auto flex max-w-[180px] flex-col items-center justify-center">
                 <p className="text-3xl font-semibold">오랜 경험</p>
-                <p className="mt-3 text-sm leading-6 text-[#6b625b] break-keep">
+                <p className="mt-3 break-keep text-sm leading-6 text-[#6b625b]">
                   축적된 본식 촬영 노하우
                 </p>
               </div>
 
-              <div className="flex flex-col items-center justify-center max-w-[180px] mx-auto">
+              <div className="mx-auto flex max-w-[180px] flex-col items-center justify-center">
                 <p className="text-3xl font-semibold">신뢰 중심</p>
-                <p className="mt-3 text-sm leading-6 text-[#6b625b] break-keep">
+                <p className="mt-3 break-keep text-sm leading-6 text-[#6b625b]">
                   결과보다 과정까지 안정적으로
                 </p>
               </div>
 
-              <div className="flex flex-col items-center justify-center max-w-[180px] mx-auto">
+              <div className="mx-auto flex max-w-[180px] flex-col items-center justify-center">
                 <p className="text-3xl font-semibold">완성도</p>
-                <p className="mt-3 text-sm leading-6 text-[#6b625b] break-keep">
+                <p className="mt-3 break-keep text-sm leading-6 text-[#6b625b]">
                   오래 봐도 질리지 않는 결과물
                 </p>
               </div>
@@ -294,12 +260,7 @@ export default function HomePage() {
               </h2>
             </div>
 
-            <a
-              href="/portfolio"
-              className="inline-flex items-center text-sm font-medium text-[#6b5848] underline underline-offset-4"
-            >
-              전체 촬영 보기
-            </a>
+           
           </div>
 
           {loadingPortfolio ? (
@@ -323,7 +284,7 @@ export default function HomePage() {
               {randomHallCards.map((item) => (
                 <a
                   key={item.hall}
-                  href="/portfolio"
+                  href={`/portfolio/${encodeHall(item.hall)}`}
                   className="group overflow-hidden rounded-[1.75rem] bg-white shadow-[0_18px_40px_rgba(0,0,0,0.06)] transition duration-300 hover:-translate-y-1"
                 >
                   <div className="overflow-hidden">
@@ -362,78 +323,77 @@ export default function HomePage() {
       </section>
 
       <section id="reviews" className="bg-[#ece3d8] py-24">
-  <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-16">
-    <div className="max-w-2xl">
-      <p className="text-sm uppercase tracking-[0.28em] text-[#9b846d]">
-        Reviews
-      </p>
-      <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">
-        결국 선택을 만드는 건
-        <br />
-        실제로 남겨진 만족감입니다
-      </h2>
-      <p className="mt-5 text-base leading-8 text-[#5f554d]">
-        위브스냅을 선택한 신랑신부가 실제로 남겨준 후기들 입니다.
-      
-      </p>
-    </div>
+        <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-16">
+          <div className="max-w-2xl">
+            <p className="text-sm uppercase tracking-[0.28em] text-[#9b846d]">
+              Reviews
+            </p>
+            <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">
+              결국 선택을 만드는 건
+              <br />
+              실제로 남겨진 만족감입니다
+            </h2>
+            <p className="mt-5 text-base leading-8 text-[#5f554d]">
+              위브스냅을 선택한 신랑신부가 실제로 남겨준 후기들 입니다.
+            </p>
+          </div>
 
-    <div className="mt-12 grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-      <div className="order-2 space-y-4 lg:order-1">
-        {reviewItems.map((item) => {
-          const isActive = activeReview.id === item.id;
+          <div className="mt-12 grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+            <div className="order-2 space-y-4 lg:order-1">
+              {reviewItems.map((item) => {
+                const isActive = activeReview.id === item.id;
 
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setActiveReview(item)}
-              className={`w-full rounded-[1.5rem] border p-5 text-left transition duration-300 ${
-                isActive
-                  ? "border-[#cdbdac] bg-white shadow-[0_14px_30px_rgba(0,0,0,0.08)]"
-                  : "border-[#ddd2c5] bg-[#f8f3ed] hover:border-[#cdbdac] hover:bg-white"
-              }`}
-            >
-              <p className="text-xs uppercase tracking-[0.24em] text-[#9b846d]">
-                {item.label}
-              </p>
-              <h3 className="mt-2 text-lg font-semibold leading-7 text-[#1d1815] sm:text-xl">
-                {item.title}
-              </h3>
-              <p className="mt-3 text-sm leading-7 text-[#6b625b]">
-                {item.summary}
-              </p>
-            </button>
-          );
-        })}
-      </div>
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setActiveReview(item)}
+                    className={`w-full rounded-[1.5rem] border p-5 text-left transition duration-300 ${
+                      isActive
+                        ? "border-[#cdbdac] bg-white shadow-[0_14px_30px_rgba(0,0,0,0.08)]"
+                        : "border-[#ddd2c5] bg-[#f8f3ed] hover:border-[#cdbdac] hover:bg-white"
+                    }`}
+                  >
+                    <p className="text-xs uppercase tracking-[0.24em] text-[#9b846d]">
+                      {item.label}
+                    </p>
+                    <h3 className="mt-2 text-lg font-semibold leading-7 text-[#1d1815] sm:text-xl">
+                      {item.title}
+                    </h3>
+                    <p className="mt-3 text-sm leading-7 text-[#6b625b]">
+                      {item.summary}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
 
-      <div className="order-1 lg:order-2">
-        <div className="overflow-hidden rounded-[2rem] border border-[#ddd2c5] bg-white p-3 shadow-[0_20px_50px_rgba(0,0,0,0.08)]">
-          <div className="overflow-hidden rounded-[1.5rem] bg-[#f7efe6]">
-            <img
-              src={activeReview.image}
-              alt={activeReview.title}
-              className="h-full w-full object-cover"
-            />
+            <div className="order-1 lg:order-2">
+              <div className="overflow-hidden rounded-[2rem] border border-[#ddd2c5] bg-white p-3 shadow-[0_20px_50px_rgba(0,0,0,0.08)]">
+                <div className="overflow-hidden rounded-[1.5rem] bg-[#f7efe6]">
+                  <img
+                    src={activeReview.image}
+                    alt={activeReview.title}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-[1.5rem] border border-[#ddd2c5] bg-white px-5 py-4 shadow-[0_10px_24px_rgba(0,0,0,0.04)]">
+                <p className="text-xs uppercase tracking-[0.22em] text-[#9b846d]">
+                  Selected Review
+                </p>
+                <p className="mt-2 text-base font-semibold leading-7 text-[#1d1815]">
+                  {activeReview.title}
+                </p>
+                <p className="mt-2 text-sm leading-7 text-[#6b625b]">
+                  {activeReview.summary}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-
-        <div className="mt-5 rounded-[1.5rem] border border-[#ddd2c5] bg-white px-5 py-4 shadow-[0_10px_24px_rgba(0,0,0,0.04)]">
-          <p className="text-xs uppercase tracking-[0.22em] text-[#9b846d]">
-            Selected Review
-          </p>
-          <p className="mt-2 text-base font-semibold leading-7 text-[#1d1815]">
-            {activeReview.title}
-          </p>
-          <p className="mt-2 text-sm leading-7 text-[#6b625b]">
-            {activeReview.summary}
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+      </section>
 
       <section id="faq" className="bg-[#f6f2ec] py-24">
         <div className="mx-auto max-w-5xl px-6 sm:px-10 lg:px-16">
