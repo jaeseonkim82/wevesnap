@@ -32,7 +32,7 @@ export default function PortfolioPage() {
         setLoading(true);
         setError("");
 
-        const response = await fetch("/api/halls", {
+        const response = await fetch(`${window.location.origin}/api/halls`, {
           cache: "no-store",
         });
 
@@ -41,7 +41,7 @@ export default function PortfolioPage() {
         }
 
         const data = await response.json();
-        setHalls(data || []);
+        setHalls(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error(err);
         setError("웨딩홀 목록을 불러오지 못했습니다.");
@@ -62,36 +62,36 @@ export default function PortfolioPage() {
     <main className="min-h-screen bg-[#f6f2ec] text-[#1d1815]">
       <Header />
 
-      <section className="bg-[#1d1815] px-6 pb-16 pt-32 text-white sm:px-10 lg:px-16">
+      <section className="bg-[#1d1815] px-5 pb-14 pt-32 text-white sm:px-10 sm:pb-16 lg:px-16">
         <div className="mx-auto max-w-7xl">
-          <p className="text-sm uppercase tracking-[0.32em] text-white/55">
+          <p className="text-[11px] uppercase tracking-[0.28em] text-white/55 sm:text-sm sm:tracking-[0.32em]">
             Portfolio
           </p>
 
-          <h1 className="mt-5 text-4xl font-semibold leading-tight sm:text-5xl">
+          <h1 className="mt-5 break-keep text-[36px] font-semibold leading-tight tracking-[-0.05em] sm:text-5xl">
             웨딩홀별로 확인하는
             <br />
             위브스냅의 실제 촬영
           </h1>
 
-          <p className="mt-6 max-w-2xl text-base leading-8 text-white/72">
+          <p className="mt-6 max-w-2xl break-keep text-[15px] leading-8 text-white/72 sm:text-base">
             예식장은 조명, 동선, 분위기에 따라 사진의 결과가 달라집니다.
             위브스냅이 실제로 촬영한 장소별 포트폴리오를 먼저 확인해보세요.
           </p>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-12 sm:px-10 lg:px-16">
-        <div className="flex flex-wrap gap-3">
+      <section className="mx-auto max-w-7xl px-5 py-12 sm:px-10 lg:px-16">
+        <div className="grid grid-cols-3 gap-3 sm:flex sm:flex-wrap">
           {filters.map((filter) => (
             <button
               key={filter}
               type="button"
               onClick={() => setActive(filter)}
-              className={`rounded-full px-5 py-2 text-sm font-medium transition ${
+              className={`h-12 rounded-full border text-[15px] font-medium transition sm:h-auto sm:px-5 sm:py-2 sm:text-sm ${
                 active === filter
-                  ? "bg-[#1d1815] text-white"
-                  : "border border-[#d8ccc0] bg-white text-[#5f554d] hover:bg-[#f5eee6]"
+                  ? "border-[#1d1815] bg-[#1d1815] text-white"
+                  : "border-[#d8ccc0] bg-white text-[#5f554d] hover:bg-[#f5eee6]"
               }`}
             >
               {filter}
@@ -99,15 +99,15 @@ export default function PortfolioPage() {
           ))}
         </div>
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.24em] text-[#9b846d]">
+            <p className="text-[12px] uppercase tracking-[0.24em] text-[#9b846d] sm:text-sm">
               Wedding Hall
             </p>
-            <h2 className="mt-2 text-3xl font-semibold">
+            <h2 className="mt-2 break-keep text-[30px] font-semibold tracking-[-0.04em] sm:text-3xl">
               촬영 장소를 선택해보세요
             </h2>
-            <p className="mt-2 text-sm leading-7 text-[#6b625b]">
+            <p className="mt-2 break-keep text-[14px] leading-7 text-[#6b625b] sm:text-sm">
               궁금한 웨딩홀을 선택하면 해당 장소의 실제 촬영 사진을 확인할 수
               있습니다.
             </p>
@@ -117,21 +117,21 @@ export default function PortfolioPage() {
             href="https://open.kakao.com/o/s2cR31ph"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex w-fit items-center justify-center rounded-full bg-[#1d1815] px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5"
+            className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-[#1d1815] px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 sm:mt-0 sm:w-fit"
           >
             내 예식장 촬영 문의
           </a>
         </div>
 
         {loading && (
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {[1, 2, 3, 4, 5, 6].map((item) => (
               <div
                 key={item}
-                className="overflow-hidden rounded-[1.8rem] border border-[#e4d9cd] bg-white shadow-[0_18px_40px_rgba(0,0,0,0.05)]"
+                className="overflow-hidden rounded-[1.5rem] border border-[#e4d9cd] bg-white shadow-[0_18px_40px_rgba(0,0,0,0.05)] sm:rounded-[1.8rem]"
               >
-                <div className="h-[420px] w-full animate-pulse bg-[#ece5dc]" />
-                <div className="p-6">
+                <div className="h-[360px] w-full animate-pulse bg-[#ece5dc] sm:h-[420px]" />
+                <div className="p-5 sm:p-6">
                   <div className="h-4 w-24 animate-pulse rounded bg-[#ece5dc]" />
                   <div className="mt-4 h-6 w-40 animate-pulse rounded bg-[#ece5dc]" />
                   <div className="mt-4 h-4 w-full animate-pulse rounded bg-[#ece5dc]" />
@@ -152,7 +152,7 @@ export default function PortfolioPage() {
         )}
 
         {!loading && !error && filteredHalls.length > 0 && (
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {filteredHalls.map((item) => (
               <button
                 key={item.hall}
@@ -160,33 +160,33 @@ export default function PortfolioPage() {
                 onClick={() =>
                   router.push(`/portfolio/${encodeHall(item.hall)}`)
                 }
-                className="group overflow-hidden rounded-[1.8rem] border border-[#e4d9cd] bg-white text-left shadow-[0_18px_40px_rgba(0,0,0,0.05)] transition duration-300 hover:-translate-y-1"
+                className="group overflow-hidden rounded-[1.5rem] border border-[#e4d9cd] bg-white text-left shadow-[0_18px_40px_rgba(0,0,0,0.05)] transition duration-300 hover:-translate-y-1 sm:rounded-[1.8rem]"
               >
                 <div className="overflow-hidden">
                   <img
                     src={item.coverImage}
                     alt={`${item.hall} 대표 이미지`}
-                    className="h-[420px] w-full object-cover transition duration-700 group-hover:scale-105"
+                    className="h-[360px] w-full object-cover transition duration-700 group-hover:scale-105 sm:h-[420px]"
                   />
                 </div>
 
-                <div className="p-6">
-                  <p className="text-xs uppercase tracking-[0.24em] text-[#9b846d]">
+                <div className="p-5 sm:p-6">
+                  <p className="text-[11px] uppercase tracking-[0.24em] text-[#9b846d] sm:text-xs">
                     {item.category || "Wedding"}
                   </p>
 
-                  <h2 className="mt-3 text-2xl font-semibold text-[#211c18]">
+                  <h2 className="mt-3 truncate text-[22px] font-semibold text-[#211c18] sm:text-2xl">
                     {item.hall}
                   </h2>
 
-                  <p className="mt-3 text-sm leading-7 text-[#6b625b]">
+                  <p className="mt-3 text-[13px] leading-7 text-[#6b625b] sm:text-sm">
                     총 {item.count}장의 실제 촬영 사진 보기
                   </p>
 
                   <div className="mt-5 inline-flex items-center text-sm font-semibold text-[#1d1815]">
                     이 장소 사진 보기
                     <span className="ml-2 transition group-hover:translate-x-1">
-                      →
+                      
                     </span>
                   </div>
                 </div>
@@ -196,20 +196,20 @@ export default function PortfolioPage() {
         )}
       </section>
 
-      <section className="bg-[#1d1815] px-6 py-20 text-white sm:px-10 lg:px-16">
+      <section className="bg-[#1d1815] px-5 py-16 text-white sm:px-10 sm:py-20 lg:px-16">
         <div className="mx-auto max-w-4xl text-center">
-          <h2 className="text-3xl font-semibold leading-tight sm:text-5xl">
+          <h2 className="break-keep text-[28px] font-semibold leading-tight tracking-[-0.04em] sm:text-5xl">
             내 예식장도
             <br />
             이렇게 담길 수 있을지 궁금하다면
           </h2>
 
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-white/75">
+          <p className="mx-auto mt-5 max-w-2xl break-keep text-[14px] leading-7 text-white/75 sm:mt-6 sm:text-base sm:leading-8">
             예식 일정과 장소를 남겨주시면, 위브스냅이 해당 공간에 맞는 촬영
             가능 여부와 방향을 안내해드리겠습니다.
           </p>
 
-          <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+          <div className="mt-8 flex flex-col items-center gap-3 sm:mt-10 sm:flex-row sm:justify-center sm:gap-4">
             <a
               href="https://open.kakao.com/o/s2cR31ph"
               target="_blank"

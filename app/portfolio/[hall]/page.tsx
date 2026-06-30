@@ -413,7 +413,7 @@ export default function PortfolioHallPage() {
 
       {currentItem && (
         <div
-          className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70 px-0 py-0 backdrop-blur-sm sm:px-4 sm:py-8 lg:items-center"
+          className="fixed inset-0 z-[10000] flex items-end justify-center bg-black/70 px-0 py-0 backdrop-blur-sm sm:px-4 sm:py-8 lg:items-center"
           onClick={closeModal}
         >
           <div
