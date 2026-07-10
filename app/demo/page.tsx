@@ -76,7 +76,7 @@ const contents = [
   },
 ];
 
-export default function AdmitAIDemoPage() {
+export default function AdmeetAIDemoPage() {
   const [step, setStep] = useState<Step>("landing");
   const [progress, setProgress] = useState(0);
   const [previewMode, setPreviewMode] = useState<"before" | "after">(
@@ -143,7 +143,7 @@ export default function AdmitAIDemoPage() {
   }
 
   return (
-    <main className="admit-page">
+    <main className="admeet-page">
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
 
@@ -151,7 +151,7 @@ export default function AdmitAIDemoPage() {
         <button className="brand" onClick={resetDemo}>
           <span className="brand-mark">A</span>
           <span>
-            admit<span className="brand-ai">AI</span>
+            admeet<span className="brand-ai">AI</span>
           </span>
         </button>
 
@@ -273,7 +273,7 @@ export default function AdmitAIDemoPage() {
               </h1>
 
               <p>
-                Admit AI가 영상의 장면, 공간, 분위기와 오브젝트를
+                Admeet AI가 영상의 장면, 공간, 분위기와 오브젝트를
                 분석해 제품이 자연스럽게 들어갈 수 있는 순간을
                 찾아냅니다.
               </p>
@@ -362,7 +362,7 @@ export default function AdmitAIDemoPage() {
                 disabled={!uploaded}
                 onClick={() => setStep("creatorAnalyzing")}
               >
-                Admit AI 분석 시작
+                Admeet AI 분석 시작
                 <span>→</span>
               </button>
             </div>
@@ -992,7 +992,7 @@ export default function AdmitAIDemoPage() {
           cursor: pointer;
         }
 
-        .admit-page {
+        .admeet-page {
           --bg: #07090d;
           --panel: rgba(20, 24, 32, 0.88);
           --panel-soft: rgba(255, 255, 255, 0.045);
